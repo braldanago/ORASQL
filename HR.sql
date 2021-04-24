@@ -932,6 +932,124 @@ EXPRESSION IN SELECT MUST MATCH IN NUMBER
 DATA TYPE OF EACH COLUMN MUST MATCH
 PARENTHESES  CAN BUE USED  TO ALTER  THE SEQUENCE OF EXECUTION
 ORDERBY CLAUSE CAN APPEAR ONLY AT THE VERY END OF THE STATEMENT */
+--OUTPUT IS SORTED BY DEFAULT EXCEPT IN "UNION ALL"
+--IT (UNION) SHOWS DUPLICATES ONLY A SINGLE TIME
+
+select last_name, department_id, 1 dummy
+FROM employees 
+WHERE department_id=10
+UNION
+select last_name, department_id, 2 dummy
+FROM employees 
+WHERE department_id=90
+UNION
+select last_name, department_id, 3 dummy
+FROM employees 
+WHERE department_id=20
+ORDER BY dummy;
+
+--UNION ALL SORTS THE DATA IN THE ORDER THAT WE SELECT THE DATA (DIFFERENT FROM UNION)
+--IT SHOWS DUPPLICATES MANY TIMES
+select last_name, department_id, 1 dummy
+FROM employees 
+WHERE department_id=10
+UNION ALL
+select last_name, department_id, 2 dummy
+FROM employees 
+WHERE department_id=90
+UNION ALL
+select last_name, department_id, 3 dummy
+FROM employees 
+WHERE department_id=20
+ORDER BY dummy;
 
 
+--INTERSECT - ROWS THAT ARE IN COMMON IN THE QUERIES
+--SORTS BY THE FIRST COLUMN IN THE FIRST QUERY
 
+SELECT
+    employee_id
+FROM
+    employees
+INTERSECT
+SELECT
+    manager_id
+FROM
+    employees;
+
+
+--MINUS - ROWS THAT ARE IN A BUT NOT IN B 
+--SORTS BY THE FIRST COLUMN IN THE FIRST QUERY
+
+SELECT
+    employee_id
+FROM
+    employees
+MINUS
+SELECT
+    manager_id
+FROM
+    employees;
+
+
+--MATCHING QUERIES
+SELECT
+    location_id, department_name, TO_CHAR(NULL) state_p
+FROM
+    departments
+UNION
+SELECT
+    location_id, 'X', state_province
+FROM
+    locations;
+
+---------------
+---PRACTICE 9-1
+---------------
+
+SELECT DEPARTMENT_ID
+FROM DEPARTMENTS
+MINUS
+SELECT DEPARTMENT_ID
+FROM EMPLOYEES
+WHERE job_id='ST_CLERK';
+
+--2
+SELECT
+    country_id,
+    country_name
+FROM
+    countries
+MINUS
+SELECT
+     c.country_id,
+    c.country_name
+FROM countries c, LOCATIONS l, DEPARTMENTS d
+WHERE c.COUNTRY_ID = l.COUNTRY_ID and
+        l.LOCATION_ID=d.LOCATION_ID;
+--3
+SELECT
+    employee_id,
+    job_id,
+    department_id
+FROM
+    employees
+WHERE department_id=50 or department_id=80 ;
+
+SELECT
+    employee_id,
+    job_id,
+    department_id
+FROM
+    employees
+WHERE department_id=50 
+UNION
+SELECT
+    employee_id,
+    job_id,
+    department_id
+FROM
+    employees
+WHERE department_id=80;
+
+---
