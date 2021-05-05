@@ -2081,3 +2081,295 @@ SELECT
 FROM
     employees e;
     SELECT * FROM ALL_USERS
+    
+--------------------------------------------------------------------------------
+-----             7 :Manipulating Data by Using Subqueries        --------------
+--------------------------------------------------------------------------------
+
+-------------------subqueries to manipulate data
+
+--INSERTING BY USING A SUBQUERY AS A TARGET
+
+INSERT INTO (
+    SELECT L.LOCATION_ID, l.CITY, l.COUNTRY_ID
+    FROM LOCATIONS L
+    JOIN COUNTRIES C
+    ON(l.COUNTRY_ID=C.COUNTRY_ID)
+    JOIN REGIONS USING(REGION_ID)
+    WHERE REGION_NAME = 'Europe'
+) VALUES (3300,'Cardiff', 'UK');
+
+--USING WITH CHECK OPTION
+----ENSURE THAT THE DATA INSERTED RESPECTS THE CONSTRAINTS IN THE SUBQUERY
+----NOT CHANGING ROWS THAT AREN'T IN THE SUBQUERY
+INSERT INTO (
+    SELECT LOCATION_ID, CITY, COUNTRY_ID
+    FROM LOCATIONS L
+    WHERE COUNTRY_ID IN 
+    (SELECT COUNTRY_ID
+    FROM COUNTRIES
+    NATURAL JOIN REGIONS
+    WHERE REGION_NAME = 'Europe')
+    WITH CHECK OPTION
+) VALUES (3300,'Washington', 'US');
+/*
+WHERE CLAUSE VIOLATION
+*/
+--CORRELATED SUBQUERIES
+
+--CORRELATED UPDATE
+UPDATE EMP2 E
+SET DEPARMENT_NAME = (
+    SELECT DEPARMENT_NAME
+    FROM DEPARTMENTS D
+    WHERE E.DEPARMENT_ID=D.DEPARMENT_ID
+);
+
+
+---------------
+---PRACTICE 7-1
+---------------
+--quix
+
+---------------
+
+--------------------------------------------------------------------------------
+-----             8 :Controlling User Access        --------------
+--------------------------------------------------------------------------------
+
+----------------------------SYSTEM PRIVILEGES
+--FROM DBA
+alter session set "_ORACLE_SCRIPT"=true;
+CREATE USER lucas IDENTIFIED BY lucas;
+
+GRANT CONNECT TO lucas;
+
+
+--FROM LUCAS
+SELECT * FROM ROLE_SYS_PRIVS;
+/*
+ROLE, PRIVILEGE, ADMIN_OPTION, COMMON, INHERITED
+CONNECT	CREATE SESSION	NO	YES	NO
+CONNECT	SET CONTAINER	NO	YES	NO
+*/
+SELECT * FROM USER_SYS_PRIVS;
+
+--FROM DBA
+SELECT * FROM USER_SYS_PRIVS;   
+
+--FROM LUCAS
+CREATE TABLE DEMO (ID NUMBER);
+
+--CREATE TABLE DEMO (ID NUMBER) WITH ADMIN OPTION;
+---THIS ALLOWS LUCAS TO GRANT THAT PRIVILEGE TO ANOTHER USER
+
+
+--FROM DBA
+GRANT RESOURCE TO lucas;
+
+--FROM LUCAS
+SELECT * FROM ROLE_SYS_PRIVS;
+/*
+ROLE, PRIVILEGE, ADMIN_OPTION, COMMON, INHERITED
+RESOURCE	CREATE SEQUENCE	NO	YES	NO
+RESOURCE	CREATE PROCEDURE	NO	YES	NO
+CONNECT	CREATE SESSION	NO	YES	NO
+RESOURCE	CREATE CLUSTER	NO	YES	NO
+CONNECT	SET CONTAINER	NO	YES	NO
+RESOURCE	CREATE TABLE	NO	YES	NO
+RESOURCE	CREATE TRIGGER	NO	YES	NO
+RESOURCE	CREATE TYPE	NO	YES	NO
+RESOURCE	CREATE OPERATOR	NO	YES	NO
+RESOURCE	CREATE INDEXTYPE	NO	YES	NO
+*/
+
+
+--PRIVILEGES
+----SYSTEM: PERFORMING A PARTICULAR ACTION WITHIN THE DATA
+----OBJECT: MANIPULATING THE CONTENT OF  THE DATABASE OBJECTS
+
+--FROM LUCAS
+--PRIVILEGIOS QUE LUCAS TIENE A OTRO USUARIO, CON LA POSIBILIDAD QUE EL OTRO TAMBIEN PUEDE OTORGAR
+GRANT ALL ON DEMO TO OTROSUARIO WITH GRANT OPTION;
+
+--  
+REVOKE SELECT ON DEMO FROM LUCAS;
+
+-----------------------ROLE
+--CREATE
+CREATE ROLE MANAGER;
+--GRANT PRIVS TO ROLE
+GRANT CREATE TABLE TO MANAGER;
+--GRANT ROLE TO USER
+GRANT MANAGER TO LUCAS;
+
+-----------------CHANGING PASS
+ALTER USER LUCAS
+IDENTIFIED BY LUCAS2;
+
+
+
+-----------------OBJECT PRIVS
+--TABLE
+/*ALTER,DELETE,INDEX,INSERT,REFERENCES,SELECT,UPDATE*/
+--VIEW
+/*DELETE,INSERT,SELECT,UPDATE*/
+
+--GRANTING OBJ PRIVS
+GRANT SELECT ON EMPLOYEES TO DEMO;
+GRANT UPDATE(DEPARTMENT_NAME,LOCATION_ID)
+ON DEPARTMENTS
+TO DEMO,MANAHER;
+
+--REVOGKING OBJ PRIVS
+-----PRIVS GRANTED THROUGH "WITH GRANT OPTION" ARE REVOKED
+
+
+---------------
+---PRACTICE 8-1
+---------------
+select * from dual;
+--8
+--FROM braldanago,
+create table demoS(id number);
+
+select * from demoS;
+
+GRANT SELECT ON DEMOS TO LUCAS;
+
+--from lucas
+select * from braldanago.demoS;
+
+--take back the privileges from that user
+--FROM braldanago,
+REVOKE SELECT ON DEMOS FROM LUCAS;
+
+--from lucas
+select * from braldanago.demoS;
+/*
+ORA-00942: la tabla o vista no existe
+00942. 00000 -  "table or view does not exist"
+*Cause:    
+*Action:
+Error en la línea: 1, columna: 15
+*/
+
+
+
+--------------------------------------------------------------------------------
+-----    9 : Manipulating Data Using Advanced Queries     --------------
+--------------------------------------------------------------------------------
+
+-----------------------------EXPLICIT DEFAULT 
+--CAN BE USED IN "INSERT" AND "UPDATE" STATEMENTS
+--if thereis not a default value, inserts a null instead
+
+CREATE TABLE MYDEFAULT (ID NUMBER, NAME VARCHAR2(25) DEFAULT 'NO NAME', DEP_NAME VARCHAR2(25));
+
+INSERT INTO MYDEFAULT VALUES (111,DEFAULT,DEFAULT);
+
+SELECT * FROM MYDEFAULT;
+/*
+ID, NAME, DEP_NAME
+111	NO NAME	
+*/
+
+---------------------MULTITABLE  INSERTS
+
+--UNCONDITTIONAL INSERT ALL
+---INSERTS THE DATA SET WE GOT WITH THE SELECT STATEMENT IN EACH TABLE (SAL_HISTORY,MGR_HISTORY)
+INSERT ALL
+INTO SAL_HISTORY VALUES (EMPID,HIREDATE,SAL)
+INTO MGR_HISTORY VALUES (EMPID,MGR, SAL)
+SELECT EMPLOYEE_ID EMPID, HIRE_DATE HIREDATE,
+SALARY SAL, MANAGER_ID MGR
+FROM EMPLOYEES
+WHERE EMPLOYEE_ID>200;
+
+--CONDITTIONAL INSERT ALL
+----INSERT DATA DEPENDING ON CONDITIONS
+
+INSERT ALL
+WHEN SAL > 10000 THEN
+INTO SAL_HISTORY VALUES (EMPID,HIREDATE,SAL)
+WHEN MGR > 200 THEN
+INTO MGR_HISTORY VALUES (EMPID,MGR, SAL)
+SELECT EMPLOYEE_ID EMPID, HIRE_DATE HIREDATE,
+SALARY SAL, MANAGER_ID MGR
+FROM EMPLOYEES
+WHERE EMPLOYEE_ID>200;
+
+---CONDITIONAL INSERT FIRST
+--makes the multitable insert work like a CASE expression, 
+--so the conditions are tested until the first match is found,
+INSERT FIRST
+  WHEN id <= 3 THEN
+    INTO dest_tab1 (id, description) VALUES (id, description)
+  WHEN id <= 5 THEN
+    INTO dest_tab2 (id, description) VALUES (id, description)
+  ELSE
+    INTO dest_tab3 (id, description) VALUES (id, description)
+SELECT id, description
+FROM   source_tab;
+
+---PIVOTING INSERT
+----The PIVOT operator takes data in separate rows, aggregates it and converts it into columns. 
+
+
+------------------------------MERGE 
+--PROVIDES THE ABILITY TO CONDITTIONALLY UPDATE, INSERT OR DELETE DATABASE TABLE
+--PERFORMS AN UPDATE IF THE ROW EXISTS AND AN INSERTIF IT IS A NEW ROW
+----AVOIDS SEPARATE UPDATES
+----INCREASES PERFORMANCE AND EASE USE
+----USEFUL IN DATA WAREHOUSE
+--conditionally insert or update data depending on its presence, 
+
+MERGE INTO employees e
+    USING hr_records h
+    ON (e.id = h.emp_id)
+  WHEN MATCHED THEN
+    UPDATE SET e.address = h.address
+  WHEN NOT MATCHED THEN
+    INSERT (id, address)
+    VALUES (h.emp_id, h.address);
+
+MERGE INTO employees e
+    USING (SELECT * FROM hr_records WHERE start_date > ADD_MONTHS(SYSDATE, -1)) h
+    ON (e.id = h.emp_id)
+  WHEN MATCHED THEN
+    UPDATE SET e.address = h.address
+  WHEN NOT MATCHED THEN
+    INSERT (id, address)
+    VALUES (h.emp_id, h.address);
+    
+    
+    ----------------
+    
+UPDATE EMPLOYEES SET SALARY = 50000 WHERE EMPLOYEE_ID=101;
+COMMIT;
+
+SELECT * FROM EMPLOYEES WHERE EMPLOYEE_ID=101;
+/*
+101	Neena	Kochhar	NKOCHHAR	515.123.4568	21/09/05	AD_VP	50000		100	90
+*/
+
+ROLLBACK;
+
+SELECT * FROM EMPLOYEES WHERE EMPLOYEE_ID=101;
+/*
+101	Neena	Kochhar	NKOCHHAR	515.123.4568	21/09/05	AD_VP	50000		100	90
+*/
+
+SELECT LAST_NAME, SALARY,  VERSIONS_STARTTIME, VERSIONS_ENDTIME
+FROM EMPLOYEES
+VERSIONS BETWEEN SCN MINVALUE AND MAXVALUE
+WHERE EMPLOYEE_ID=101;
+/*
+Kochhar	50000	04/05/21 20:20:28,000000000	
+Kochhar	17000		04/05/21 20:20:28,000000000
+*/
+
+UPDATE EMPLOYEES SET SALARY = 17000 WHERE EMPLOYEE_ID=101;
+COMMIT;
+
+SELECT * FROM EMPLOYEES WHERE EMPLOYEE_ID=101;
