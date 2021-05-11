@@ -2392,4 +2392,93 @@ WHERE EMPLOYEE_ID <125;
 
 
 
+--------------------------------------------------------------------------------
+-----    10 :Managing Data in Different Time Zones     --------------
+--------------------------------------------------------------------------------
+--DATE OF THE DATABASE
+select sysdate from dual;
+
+--DATE OF LOCATION
+select CURRENT_DATE from dual;
+
+----------------TIME_ZONE SESSION PARAMETER
+
+-- TIME ZONE OF THE DATABASE
+select DBTIMEZONE from dual;
+
+
+select sessiontimezone from dual;
+
+select current_timezone from dual;
+
+alter session set time_zone='-08:00';
+
+select * from v$timezone_names;
+
+select CURRENT_DATE, CURRENT_timestamp, localtimestamp from dual;
+
+--cambiar formato
+alter session set    nls_date_format='DD-MON-YYYY HH24:MI:SS';
+
+
+select sysdate from dual;
+/*06-MAY-2021 18:13:47*/
+
+
+--CURRENT_DATE
+----CURRENT DATE FROM THE USER SESSION
+--CURRENT TIMESTAMP
+----RETURNS CURRENT DATE AND TIME    FROM THE USER SESSION
+--LOCALTIMESTAMP
+----RETURNS CURRENT DATE AND TIME    FROM THE USER SESSION
+
+
+-----------------TIMESTAMP DATA TYPES
+--TIMESTAMP
+--TIMESTAMP WITH TIME ZONE
+--TIMESTAMP WITH LOCAL TIME ZONE
+
+
+
+-----------------TIMESTAMP FIELDS
+--YEAR
+--MONTH
+--DAY
+--HOUR
+--MINUTE
+--SECOND
+--TIMEZONE_HOUR
+--TIMEZONE_MINUTE
+
+
+----------------INTERVAL DATA TYPES
+--YOU CAN USER "INTERVAL"  DATA TYPES TO STORE THE DIFFERENCE    BETWEEN TWO DATETIME VALUE
+----2 CLASSES
+------YEAR-MONTH
+------DAY-TIME
+----THE PRECISION OF THE INTERVAL IS 
+------THE ACTUAL SUBSET OF FIELDS THAT CONSTITUTES AN INTERVAL
+------SPECIFIED IN THE INTERVAL QUALIFIER
+
+
+CREATE TABLE WARRANTY (PROD_ID NUMBER,  WARRANTY_TIME INTERVAL YEAR(3) TO MONTH);
+
+INSERT INTO WARRANTY VALUES (123,INTERVAL '8' MONTH);
+INSERT INTO WARRANTY VALUES (155,INTERVAL '200' YEAR(3));
+INSERT INTO WARRANTY VALUES (678,'200-11');
+
+SELECT * FROM WARRANTY;
+
+
+----------------INTERVAL FIELDS
+--YEAR     + O - ENTERO
+--MONTH    0 A 11
+--DAY       + O - ENTERO
+--HOUR      0 A 23
+--MINUTE        0 A 59
+--SECOND        0 A 59.9 WHERE 9(N) IS PRECISION
+
+
+------------------FUNCTIONS
+--EXTRACT
 
